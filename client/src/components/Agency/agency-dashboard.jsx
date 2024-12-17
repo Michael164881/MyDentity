@@ -312,7 +312,7 @@ const AgencyDashboard = () => {
         <Logo src={MyDentityLogo} alt="MyDentity Logo" />
         <MenuSection>
           <MenuItem active onClick={() => navigate('/agency-dashboard')}>
-            ✍️ CITIZEN DATA
+            ✍️ VIEW CITIZEN DATA
           </MenuItem>
           <MenuItem onClick={() => navigate('/agency-bulkData')}>
             📂 BULK DATA
@@ -336,7 +336,7 @@ const AgencyDashboard = () => {
 
         <ContentContainer>
           <ViewUserDataTitle>
-            <h2>View User Data</h2>
+            <h2>View Citizen Data</h2>
             <p>
             Access citizen data securely and efficiently. By entering the IC number, 
             authorized personnel can quickly retrieve and view essential user information. This ensures that 

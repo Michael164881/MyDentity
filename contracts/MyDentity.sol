@@ -935,6 +935,24 @@ contract MyDentity {
         return users[_ic].dataVersions;
     }
 
+    function getUserDetails(string memory _ic) public view returns (
+        string memory IC,
+        string memory role,
+        bool registered,
+        uint256 currentVersion,
+        uint256[] memory dataVersions
+    ) {
+        User memory user = users[_ic];
+        
+        return (
+            user.IC,
+            user.role,
+            user.registered,
+            user.currentVersion,
+            user.dataVersions
+        );
+    }
+
     //========= ANALYTICS =========
     function getTotalUsers() public view returns (uint256) {
         return totalUsers;

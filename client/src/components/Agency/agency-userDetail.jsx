@@ -298,7 +298,7 @@ const AgencyUserDetail = () => {
         <Logo src={MyDentityLogo} alt="MyDentity Logo" />
         <MenuSection>
           <MenuItem active onClick={() => navigate('/agency-dashboard')}>
-            ✍️ CITIZEN DATA
+            ✍️ VIEW CITIZEN DATA
           </MenuItem>
           <MenuItem onClick={() => navigate('/agency-bulkData')}>
             📂 BULK DATA

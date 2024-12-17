@@ -457,9 +457,10 @@ const AgencyBulkData = () => {
         const agencyName = localStorage.getItem("agencyName");
 
         // Check if user is registered
-        const isRegistered = await contract.users(formData.ic).registered;
+        const [ic, role, registered, currentVersion, dataVersions] = await contract.getUserDetails(formData.ic);
 
-        if (isRegistered) {
+        console.log(registered);
+        if (registered) {
             // Use storeUserData for registered users
             const tx = await contract.storeUserData(
                 formData.ic,
@@ -495,7 +496,7 @@ const AgencyBulkData = () => {
             );
 
             await tx.wait();
-            alert("Data updated successfully for" + formData.fullName + "!");
+            alert("Data updated successfully for " + formData.fullName + "!");
         } else {
             // Use TempStoreUserData for unregistered users
             const personalInfo = await contract.createTempPersonalInfo(
@@ -559,7 +560,7 @@ const AgencyBulkData = () => {
             );
 
             await tx.wait();
-            alert("User has not registered yet. Temporary data stored successfully for" + formData.fullName + "!");
+            alert("User has not registered yet. Temporary data stored successfully for " + formData.fullName + "!");
         }
         
         setIsLoading(false);
@@ -616,96 +617,152 @@ const AgencyBulkData = () => {
 
   const handleBulkUpload = async () => {
     if (!csvFile) {
-      alert("Please select a CSV file first");
-      return;
+        alert("Please select a CSV file first");
+        return;
     }
 
     setIsLoading(true);
 
     try {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        MyDentityContract.abi,
-        signer
-      );
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(
+            CONTRACT_ADDRESS,
+            MyDentityContract.abi,
+            signer
+        );
 
-      // Process each row in the CSV data
-      for (const row of uploadedData) {
-        try {
-          // Create password hash (empty password for bulk uploads)
-          const passwordHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(""));
-          const agencyName = localStorage.getItem("agencyName");
+        for (const row of uploadedData) {
+            try {
+                const baseYear = 1900;
+                const baseYearTimestamp = Math.floor(new Date(`${baseYear}-01-01T00:00:00Z`).getTime() / 1000);
+                const CaldobTimestamp = Math.floor(new Date(row.DOB).getTime() / 1000);
+                const dobTimestamp = CaldobTimestamp - baseYearTimestamp;
+                const password = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(""));
+                const agencyName = localStorage.getItem("agencyName");
 
-          // Convert date string to timestamp
-          const baseYear = 1900;
-          const baseYearTimestamp = Math.floor(new Date(`${baseYear}-01-01T00:00:00Z`).getTime() / 1000);
+                // Check if user is registered
+                const [IC, role, registered, currentVersion, dataVersions] = await contract.getUserDetails(row.ic);
 
-          const CaldobTimestamp = Math.floor(new Date(row.DOB).getTime() / 1000);
-          const dobTimestamp = CaldobTimestamp - baseYearTimestamp;
+                if (registered) {
+                    // Use storeUserData for registered users
+                    const tx = await contract.storeUserData(
+                        row.ic,
+                        row.fullName || "",
+                        row.gender || "",
+                        dobTimestamp,
+                        password,
+                        row.homeAddress || "",
+                        row.state || "",
+                        row.city || "",
+                        row.zipCode || "",
+                        row.educationLevel || "",
+                        parseInt(row.graduationYear) || 0,
+                        row.institution || "",
+                        parseInt(row.householdSize) || 0,
+                        parseInt(row.householdIncome) || 0,
+                        parseInt(row.dependents) || 0,
+                        row.incomeSource || "",
+                        row.incomeFrequency || "",
+                        parseInt(row.incomeAmount) || 0,
+                        row.incomeNotes || "",
+                        row.occupation || "",
+                        row.employer || "",
+                        parseInt(row.yearsOfExperience) || 0,
+                        row.commitmentType || "",
+                        row.commitmentDetails || "",
+                        parseInt(row.commitmentAmount) || 0,
+                        row.reliefType || "",
+                        row.reliefDetails || "",
+                        parseInt(row.reliefAmount) || 0,
+                        true, // _isAgency
+                        agencyName
+                    );
 
-          console.log(row.ic);
-          console.log(row.fullName);
-          console.log(row.gender);
-          console.log(dobTimestamp);
-          console.log(passwordHash);
-          console.log(row.homeAddress, row.state, row.city, row.zipCode, row.graduationYear, row.institution, row.householdSize, row.householdIncome, row.dependents, row.incomeSource, row.incomeFrequency, row.incomeAmount, row.incomeNotes, row.occupation, row.employer, row.yearsOfExperience, row.commitmentType, row.commitmentDetails, row.commitmentAmount, row.reliefType, row.reliefDetails, row.reliefAmount, true, agencyName);
+                    await tx.wait();
+                    console.log(`Successfully updated data for registered user: ${row.fullName}`);
+                } else {
+                    // Use TempStoreUserData for unregistered users
+                    const personalInfo = await contract.createTempPersonalInfo(
+                        row.fullName || "",
+                        row.gender || "",
+                        dobTimestamp,
+                        password
+                    );
 
-          // Store data for this user
-          const tx = await contract.storeUserData(
-            row.ic,
-            row.fullName || "",
-            row.gender || "",
-            dobTimestamp,
-            passwordHash,
-            row.homeAddress || "",
-            row.state || "",
-            row.city || "",
-            row.zipCode || "",
-            row.educationLevel || "",
-            row.graduationYear || 0,
-            row.institution || "",
-            row.householdSize || 0,
-            row.householdIncome || 0,
-            row.dependents || 0,
-            row.incomeSource || "",
-            row.incomeFrequency || "",
-            row.incomeAmount || 0,
-            row.incomeNotes || "",
-            row.occupation || "",
-            row.employer || "",
-            row.yearsOfExperience || 0,
-            row.commitmentType || "",
-            row.commitmentDetails || "",
-            row.commitmentAmount || 0,
-            row.reliefType || "",
-            row.reliefDetails || "",
-            row.reliefAmount || 0,
-            true, // _isAgency
-            agencyName,
-          );
+                    const addressInfo = await contract.createTempAddressInfo(
+                        row.homeAddress || "",
+                        row.state || "",
+                        row.city || "",
+                        row.zipCode || ""
+                    );
 
-          await tx.wait();
-          console.log(`Successfully uploaded data for user: ${row.fullName}`);
+                    const educationInfo = await contract.createTempEducationInfo(
+                        row.educationLevel || "",
+                        parseInt(row.graduationYear) || 0,
+                        row.institution || ""
+                    );
 
-        } catch (error) {
-          console.error(`Error uploading data for user: ${row.fullName}`, error);
-          // Continue with next row even if current one fails
+                    const financialInfo = await contract.createTempFinancialInfo(
+                        parseInt(row.householdSize) || 0,
+                        parseInt(row.householdIncome) || 0,
+                        parseInt(row.dependents) || 0,
+                        row.incomeSource || "",
+                        row.incomeFrequency || "",
+                        parseInt(row.incomeAmount) || 0,
+                        row.incomeNotes || ""
+                    );
+
+                    const employmentInfo = await contract.createTempEmploymentInfo(
+                        row.occupation || "",
+                        row.employer || "",
+                        parseInt(row.yearsOfExperience) || 0
+                    );
+
+                    const commitmentInfo = await contract.createTempCommitmentInfo(
+                        row.commitmentType || "",
+                        row.commitmentDetails || "",
+                        parseInt(row.commitmentAmount) || 0
+                    );
+
+                    const reliefInfo = await contract.createTempReliefInfo(
+                        row.reliefType || "",
+                        row.reliefDetails || "",
+                        parseInt(row.reliefAmount) || 0
+                    );
+
+                    const tx = await contract.TempStoreUserData(
+                        row.ic,
+                        personalInfo,
+                        addressInfo,
+                        educationInfo,
+                        financialInfo,
+                        employmentInfo,
+                        commitmentInfo,
+                        reliefInfo,
+                        agencyName
+                    );
+
+                    await tx.wait();
+                    console.log(`Successfully stored temporary data for unregistered user: ${row.fullName}`);
+                }
+
+            } catch (error) {
+                console.error(`Error processing data for user: ${row.fullName}`, error);
+            }
         }
-      }
 
-      alert("Bulk upload completed successfully!");
-      setCsvFile(null);
-      setUploadedData([]);
+        alert("Bulk upload completed successfully!");
+        setCsvFile(null);
+        setUploadedData([]);
 
     } catch (error) {
-      console.error("Bulk upload error:", error);
-      alert("Error during bulk upload. Please check the console for details.");
+        console.error("Bulk upload error:", error);
+        alert("Error during bulk upload. Please check the console for details.");
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   return (
     <Container>
@@ -713,7 +770,7 @@ const AgencyBulkData = () => {
         <Logo src={MyDentityLogo} alt="MyDentity Logo" />
         <MenuSection>
           <MenuItem onClick={() => navigate('/agency-dashboard')}>
-            ✍️ CITIZEN DATA
+            ✍️ VIEW CITIZEN DATA
           </MenuItem>
           <MenuItem active onClick={() => navigate('/agency-bulkData')}>
             📂 BULK DATA

@@ -306,7 +306,7 @@ const Dashboard = () => {
 
         <AnalyticsGrid>
           <AnalyticsCard>
-            <h3>Total Users</h3>
+            <h3>Total Citizens</h3>
             <h2>{analytics.totalUsers || 0}</h2>
           </AnalyticsCard>
           <AnalyticsCard>
@@ -314,7 +314,7 @@ const Dashboard = () => {
             <h2>{analytics.totalAgencies || 0}</h2>
           </AnalyticsCard>
           <AnalyticsCard>
-            <h3>Total User Version</h3>
+            <h3>Total Citizen's Version</h3>
             <h2>{analytics.totalUpdates || 0}</h2>
           </AnalyticsCard>
         </AnalyticsGrid>
